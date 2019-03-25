@@ -117,7 +117,7 @@
 		let batchSize = 10;
 
 		let activeQueue = queue.slice(0, batchSize);
-		let inactiveQueue = queue.slice(batchSize).reverse(); // Items after the active queue are grabbed from the end of the queue.
+		let inactiveQueue = queue.slice(batchSize).reverse(); // Reverse the queue since subsequent items are grabbed from the end of the queue.
 
 		$.jStorage.set('activeQueue', activeQueue);
 		$.jStorage.set('reviewQueue', inactiveQueue);
