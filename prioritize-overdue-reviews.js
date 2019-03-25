@@ -9,7 +9,17 @@
 // ==/UserScript==
 
 (function($, wkof) {
-	const randomOffset = 0.1;
+	const randomOffset = 0.25;
+
+	if (!wkof) {
+		var response = confirm('WaniKani Prioritize Overdue Reviews script requires WaniKani Open Framework.\n Click "OK" to be forwarded to installation instructions.');
+
+		if (response) {
+			window.location.href = 'https://community.wanikani.com/t/instructions-installing-wanikani-open-framework/28549';
+		}
+
+		return;
+	}
 
 	wkof.include('ItemData');
 	wkof.ready('ItemData').then(fetchData);
@@ -51,7 +61,7 @@
 			id: item.id,
 			item: item.data.slug,
 			srs_stage: item.assignments.srs_stage,
-			available_at_time: item.assignments.available_at,
+			//available_at_time: item.assignments.available_at,
 			original_overdue_percent: overduePercent,
 			overdue_percent: adjustedOverduePercent
 		};
