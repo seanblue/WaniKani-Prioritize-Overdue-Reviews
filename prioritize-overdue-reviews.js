@@ -27,33 +27,33 @@
 		let items = results[1];
 
 		let now = new Date().getTime();
-		let stalenessList = items.filter(item => isReviewAvailable(item, now)).map(item => mapToStalenessData(item, now, srsStages)).sort(sortByStaleness);
+		let overduePercentList = items.filter(item => isReviewAvailable(item, now)).map(item => mapToOverduePercentData(item, now, srsStages)).sort(sortByOverduePercent);
 
-		window.stalenessList = stalenessList;
+		window.overduePercentList = overduePercentList;
 
-		return toStalenessDictionary(stalenessList);
+		return toOverduePercentDictionary(overduePercentList);
 	}
 
 	function isReviewAvailable(item, now) {
 		return (item.assignments && (item.assignments.available_at != null) && (new Date(item.assignments.available_at).getTime() < now));
 	}
 
-	function mapToStalenessData(item, now, srsStages) {
+	function mapToOverduePercentData(item, now, srsStages) {
 		let availableAtMs = new Date(item.assignments.available_at).getTime();
 		let msSinceAvailable = now - availableAtMs;
 
 		let msForSrsStage = srsStages[item.assignments.srs_stage].interval * 1000;
 		let msSinceLastReview = msSinceAvailable + msForSrsStage;
-		let staleness = (msSinceLastReview / msForSrsStage) - 1;
+		let overduePercent = (msSinceLastReview / msForSrsStage) - 1;
 
-		let adjustedStaleness = staleness * getRandomnessFactor();
+		let adjustedOverduePercent = overduePercent * getRandomnessFactor();
 		return {
 			id: item.id,
 			item: item.data.slug,
 			srs_stage: item.assignments.srs_stage,
 			available_at_time: item.assignments.available_at,
-			original_staleness: staleness,
-			staleness: adjustedStaleness
+			original_overdue_percent: overduePercent,
+			overdue_percent: adjustedOverduePercent
 		};
 	}
 
@@ -63,35 +63,36 @@
 		return Math.random() * (max - min) + min;
 	}
 
-	function sortByStaleness(item1, item2) {
-		let stalenessCompare = item1.staleness - item2.staleness;
-		if (stalenessCompare > 0) {
+	// TODO: Delete this.
+	function sortByOverduePercent(item1, item2) {
+		let overduePercentCompare = item1.overdue_percent - item2.overdue_percent;
+		if (overduePercentCompare > 0) {
 			return -1;
 		}
 
-		if (stalenessCompare < 0) {
+		if (overduePercentCompare < 0) {
 			return 1;
 		}
 
 		return item1.id - item2.id;
 	}
 
-	function toStalenessDictionary(items) {
+	function toOverduePercentDictionary(items) {
 		var dict = {};
 
 		for (let i = 0; i < items.length; i++) {
 			let item = items[i];
-			dict[item.id] = item.staleness;
+			dict[item.id] = item.overdue_percent;
 		}
 
 		return dict;
 	}
 
-	function updateReviewQueue(stalenessDictionary) {
-		window.stalenessDictionary = stalenessDictionary;
+	function updateReviewQueue(overduePercentDictionary) {
+		window.overduePercentDictionary = overduePercentDictionary;
 
 		let unsortedQueue = $.jStorage.get('activeQueue').concat($.jStorage.get('reviewQueue'));
-		let queue = unsortedQueue.sort((item1, item2) => sortQueueByStaleness(item1, item2, stalenessDictionary));
+		let queue = unsortedQueue.sort((item1, item2) => sortQueueByOverduePercent(item1, item2, overduePercentDictionary));
 
 		window.queue = queue;
 
@@ -99,13 +100,13 @@
 	}
 
 
-	function sortQueueByStaleness(item1, item2, stalenessDictionary) {
-		let stalenessCompare = stalenessDictionary[item1.id] - stalenessDictionary[item2.id];
-		if (stalenessCompare > 0) {
+	function sortQueueByOverduePercent(item1, item2, overduePercentDictionary) {
+		let overduePercentCompare = overduePercentDictionary[item1.id] - overduePercentDictionary[item2.id];
+		if (overduePercentCompare > 0) {
 			return -1;
 		}
 
-		if (stalenessCompare < 0) {
+		if (overduePercentCompare < 0) {
 			return 1;
 		}
 
