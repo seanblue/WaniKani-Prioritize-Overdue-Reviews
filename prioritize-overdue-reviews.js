@@ -3,15 +3,10 @@
 // @namespace     https://www.wanikani.com
 // @description   Prioritize review items that are more overdue based on their SRS level and when the review became available.
 // @author        seanblue
-// @version       0.9.0
+// @version       0.9.1
 // @include       https://www.wanikani.com/review/session
 // @grant         none
 // ==/UserScript==
-
-const eventNamespace = '.seanblue.overdue_reviews';
-
-(function($) {$.each(['hide'], function(i, ev) { var el = $.fn[ev]; $.fn[ev] = function() { this.trigger(ev + eventNamespace); return el.apply(this, arguments); }; }); })(window.jQuery);
-
 
 (function($, wkof) {
 	const randomOffset = 0.0;
@@ -94,16 +89,14 @@ const eventNamespace = '.seanblue.overdue_reviews';
 	}
 
 	function updateReviewQueue(stalenessDictionary) {
-		$('div[id*="loading"]:visible').on('hide' + eventNamespace, function() {
-			window.stalenessDictionary = stalenessDictionary;
+		window.stalenessDictionary = stalenessDictionary;
 
-			let unsortedQueue = $.jStorage.get('activeQueue').concat($.jStorage.get('reviewQueue'));
-			let queue = unsortedQueue.sort((item1, item2) => sortQueueByStaleness(item1, item2, stalenessDictionary));
+		let unsortedQueue = $.jStorage.get('activeQueue').concat($.jStorage.get('reviewQueue'));
+		let queue = unsortedQueue.sort((item1, item2) => sortQueueByStaleness(item1, item2, stalenessDictionary));
 
-			window.queue = queue;
+		window.queue = queue;
 
-			updateQueueState(queue);
-		});
+		updateQueueState(queue);
 	}
 
 
