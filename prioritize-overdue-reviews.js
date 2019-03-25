@@ -3,13 +3,13 @@
 // @namespace     https://www.wanikani.com
 // @description   Prioritize review items that are more overdue based on their SRS level and when the review became available.
 // @author        seanblue
-// @version       0.9.1
+// @version       0.9.2
 // @include       https://www.wanikani.com/review/session
 // @grant         none
 // ==/UserScript==
 
 (function($, wkof) {
-	const randomOffset = 0.0;
+	const randomOffset = 0.1;
 
 	wkof.include('ItemData');
 	wkof.ready('ItemData').then(fetchData);
@@ -44,7 +44,7 @@
 
 		let msForSrsStage = srsStages[item.assignments.srs_stage].interval * 1000;
 		let msSinceLastReview = msSinceAvailable + msForSrsStage;
-		let staleness = msSinceLastReview / msForSrsStage;
+		let staleness = (msSinceLastReview / msForSrsStage) - 1;
 
 		let adjustedStaleness = staleness * getRandomnessFactor();
 		return {
@@ -52,10 +52,9 @@
 			item: item.data.slug,
 			srs_stage: item.assignments.srs_stage,
 			available_at_time: item.assignments.available_at,
+			original_staleness: staleness,
 			staleness: adjustedStaleness
 		};
-
-		//return item;
 	}
 
 	function getRandomnessFactor() {
