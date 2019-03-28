@@ -3,13 +3,14 @@
 // @namespace     https://www.wanikani.com
 // @description   Prioritize review items that are more overdue based on their SRS level and when the review became available.
 // @author        seanblue
-// @version       0.9.2
+// @version       0.9.3
 // @include       https://www.wanikani.com/review/session
 // @grant         none
 // ==/UserScript==
 
 (function($, wkof) {
-	const randomOffset = 0.25;
+	const overdueThreshold = 0.1;
+	const randomItemsToInclude = 0.25;
 
 	if (!wkof) {
 		var response = confirm('WaniKani Prioritize Overdue Reviews script requires WaniKani Open Framework.\n Click "OK" to be forwarded to installation instructions.');
@@ -56,21 +57,13 @@
 		let msSinceLastReview = msSinceAvailable + msForSrsStage;
 		let overduePercent = (msSinceLastReview / msForSrsStage) - 1;
 
-		let adjustedOverduePercent = overduePercent * getRandomnessFactor();
 		return {
 			id: item.id,
 			item: item.data.slug,
 			srs_stage: item.assignments.srs_stage,
-			//available_at_time: item.assignments.available_at,
-			original_overdue_percent: overduePercent,
-			overdue_percent: adjustedOverduePercent
+			available_at_time: item.assignments.available_at,
+			overdue_percent: overduePercent
 		};
-	}
-
-	function getRandomnessFactor() {
-		let min = 1 - randomOffset;
-		let max = 1 + randomOffset;
-		return Math.random() * (max - min) + min;
 	}
 
 	// TODO: Delete this.
@@ -101,14 +94,34 @@
 	function updateReviewQueue(overduePercentDictionary) {
 		window.overduePercentDictionary = overduePercentDictionary;
 
-		let unsortedQueue = $.jStorage.get('activeQueue').concat($.jStorage.get('reviewQueue'));
-		let queue = unsortedQueue.sort((item1, item2) => sortQueueByOverduePercent(item1, item2, overduePercentDictionary));
+		let reviewQueue = $.jStorage.get('activeQueue').concat($.jStorage.get('reviewQueue'));
+		let overdueQueue = reviewQueue.filter(item => overduePercentDictionary[item.id] >= overdueThreshold);
+		let notOverdueQueue = reviewQueue.filter(item => !overdueQueue.includes(item));
+
+		let sortedOverdueQueue = overdueQueue.sort((item1, item2) => sortQueueByOverduePercent(item1, item2, overduePercentDictionary));
+
+		randomlyAddNotOverdueItems(sortedOverdueQueue, notOverdueQueue);
+
+		let queue = sortedOverdueQueue.concat(notOverdueQueue);
 
 		window.queue = queue;
 
 		updateQueueState(queue);
 	}
 
+	function randomlyAddNotOverdueItems(sortedOverdueQueue, notOverdueQueue) {
+		let randomNumberOfNotOverdueItemsToInsert = Math.min(randomItemsToInclude * sortedOverdueQueue.length, notOverdueQueue.length);
+
+		for (let i = 0; i < randomNumberOfNotOverdueItemsToInsert; i++) {
+			let randomIndex = getArrayIndex(sortedOverdueQueue.length);
+			sortedOverdueQueue.splice(randomIndex, 0, notOverdueQueue[0]);
+			notOverdueQueue.splice(0, 1);
+		}
+	}
+
+	function getArrayIndex(arraySize) {
+		return Math.floor(Math.random() * arraySize);
+	}
 
 	function sortQueueByOverduePercent(item1, item2, overduePercentDictionary) {
 		let overduePercentCompare = overduePercentDictionary[item1.id] - overduePercentDictionary[item2.id];
