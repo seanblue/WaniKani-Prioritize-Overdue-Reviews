@@ -3,14 +3,15 @@
 // @namespace     https://www.wanikani.com
 // @description   Prioritize review items that are more overdue based on their SRS level and when the review became available.
 // @author        seanblue
-// @version       0.9.3
+// @version       0.9.5
 // @include       https://www.wanikani.com/review/session
 // @grant         none
 // ==/UserScript==
 
 (function($, wkof) {
-	const overdueThreshold = 0.1;
+	const overdueThreshold = 0.20;
 	const randomItemsToInclude = 0.25;
+	const shouldSortOverdueItems = false;
 
 	if (!wkof) {
 		var response = confirm('WaniKani Prioritize Overdue Reviews script requires WaniKani Open Framework.\n Click "OK" to be forwarded to installation instructions.');
@@ -98,28 +99,30 @@
 		let overdueQueue = reviewQueue.filter(item => overduePercentDictionary[item.id] >= overdueThreshold);
 		let notOverdueQueue = reviewQueue.filter(item => !overdueQueue.includes(item));
 
-		let sortedOverdueQueue = overdueQueue.sort((item1, item2) => sortQueueByOverduePercent(item1, item2, overduePercentDictionary));
+		if (shouldSortOverdueItems) {
+			overdueQueue = overdueQueue.sort((item1, item2) => sortQueueByOverduePercent(item1, item2, overduePercentDictionary));
+		}
 
-		randomlyAddNotOverdueItems(sortedOverdueQueue, notOverdueQueue);
+		randomlyAddNotOverdueItems(overdueQueue, notOverdueQueue);
 
-		let queue = sortedOverdueQueue.concat(notOverdueQueue);
+		let queue = overdueQueue.concat(notOverdueQueue);
 
 		window.queue = queue;
 
 		updateQueueState(queue);
 	}
 
-	function randomlyAddNotOverdueItems(sortedOverdueQueue, notOverdueQueue) {
-		let randomNumberOfNotOverdueItemsToInsert = Math.min(randomItemsToInclude * sortedOverdueQueue.length, notOverdueQueue.length);
+	function randomlyAddNotOverdueItems(overdueQueue, notOverdueQueue) {
+		let randomNumberOfNotOverdueItemsToInsert = Math.min(Math.ceil(randomItemsToInclude * overdueQueue.length), notOverdueQueue.length);
 
 		for (let i = 0; i < randomNumberOfNotOverdueItemsToInsert; i++) {
-			let randomIndex = getArrayIndex(sortedOverdueQueue.length);
-			sortedOverdueQueue.splice(randomIndex, 0, notOverdueQueue[0]);
+			let randomIndex = getRandomArrayIndex(overdueQueue.length);
+			overdueQueue.splice(randomIndex, 0, notOverdueQueue[0]);
 			notOverdueQueue.splice(0, 1);
 		}
 	}
 
-	function getArrayIndex(arraySize) {
+	function getRandomArrayIndex(arraySize) {
 		return Math.floor(Math.random() * arraySize);
 	}
 
