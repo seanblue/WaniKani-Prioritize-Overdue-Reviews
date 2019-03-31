@@ -1,19 +1,16 @@
 function shuffle(array) {
-  var m = array.length, t, i;
+	let m = array.length;
 
-  // While there remain elements to shuffle…
-  while (m) {
+	while (m) {
+		let i = Math.floor(Math.random() * m);
+		m--;
 
-    // Pick a remaining element…
-    i = Math.floor(Math.random() * m--);
+		let t = array[m];
+		array[m] = array[i];
+		array[i] = t;
+	}
 
-    // And swap it with the current element.
-    t = array[m];
-    array[m] = array[i];
-    array[i] = t;
-  }
-
-  return array;
+	return array;
 }
 
 function run() {
