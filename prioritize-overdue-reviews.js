@@ -3,7 +3,7 @@
 // @namespace     https://www.wanikani.com
 // @description   Prioritize review items that are more overdue based on their SRS level and when the review became available.
 // @author        seanblue
-// @version       0.9.7
+// @version       0.9.8
 // @include       https://www.wanikani.com/review/session
 // @grant         none
 // ==/UserScript==
@@ -50,9 +50,9 @@
 
 	function openSettings() {
 		var settings = {};
-		settings[overdueThresholdPercentKey] = { type: 'number', label: 'Overdue Threshold', hover_tip: 'test 1' };
-		settings[percentRandomItemsToIncludeKey] = { type: 'number', label: 'Randomness Factor', hover_tip: 'test 2' };
-		settings[shouldSortOverdueItemsKey] = { type: 'dropdown', label: 'Overdue Item Sorting', content: {'random': 'Random','sorted':'Sorted'}, hover_tip: 'test 3' };
+		settings[overdueThresholdPercentKey] = { type: 'number', label: 'Overdue Threshold (%)', hover_tip: 'When should a review be considered overdue? This is based on the SRS level and time since the review became available.&#013;WARNING: Setting this too low could harm your long term retention!' };
+		settings[percentRandomItemsToIncludeKey] = { type: 'number', label: 'Randomness Factor (%)', hover_tip: 'What percentage of the overdue queue should be filled with random items? Including random items helps prevent you from knowing too much about what reviews will show up.&#013;WARNING: Setting this too low could harm your long term retention!' };
+		settings[shouldSortOverdueItemsKey] = { type: 'dropdown', label: 'Overdue Item Sorting', content: {'random': 'Random','sorted':'Sorted'}, hover_tip: 'Should the overdue queue remain random or be sorted to prioritize the most overdue items?&#013;WARNING: Setting this to "Sorted" could harm your long term retention!' };
 
 		let settingsDialog = new wkof.Settings({
 			script_id: settingsScriptId,
