@@ -30,8 +30,8 @@
 	}
 
 	wkof.include('ItemData, Settings, Menu');
-	wkof.ready('Settings, Menu').then(loadSettings);
-	wkof.ready('ItemData').then(reorderReviews);
+	wkof.ready('document, Settings, Menu').then(loadSettings);
+	wkof.ready('document, ItemData').then(reorderReviews);
 
 	function loadSettings() {
 		wkof.Menu.insert_script_link({ name: settingsScriptId, submenu:'Settings', title: settingsTitle, on_click: openSettings });
