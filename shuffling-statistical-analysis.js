@@ -1,7 +1,7 @@
 function shuffle(array) {
 	let m = array.length;
 
-	while (m) {
+	while (m > 0) {
 		let i = Math.floor(Math.random() * m);
 		m--;
 

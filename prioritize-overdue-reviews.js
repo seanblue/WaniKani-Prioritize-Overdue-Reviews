@@ -3,7 +3,7 @@
 // @namespace     https://www.wanikani.com
 // @description   Prioritize review items that are more overdue based on their SRS level and when the review became available.
 // @author        seanblue
-// @version       0.9.6
+// @version       0.9.7
 // @include       https://www.wanikani.com/review/session
 // @grant         none
 // ==/UserScript==
@@ -141,6 +141,8 @@
 		window.overduePercentDictionary = overduePercentDictionary;
 
 		let reviewQueue = $.jStorage.get('activeQueue').concat($.jStorage.get('reviewQueue'));
+		shuffle(reviewQueue); // Need to reshuffle in case the queue has already been sorted.
+
 		let overdueQueue = reviewQueue.filter(item => overduePercentDictionary[item.id] >= overdueThreshold);
 		let notOverdueQueue = reviewQueue.filter(item => !overdueQueue.includes(item));
 
@@ -155,6 +157,22 @@
 		window.queue = queue;
 
 		updateQueueState(queue);
+	}
+
+	// Fisher–Yates Shuffle
+	function shuffle(array) {
+		let m = array.length;
+
+		while (m > 0) {
+			let i = Math.floor(Math.random() * m);
+			m--;
+
+			let t = array[m];
+			array[m] = array[i];
+			array[i] = t;
+		}
+
+		return array;
 	}
 
 	function randomlyAddNotOverdueItems(overdueQueue, notOverdueQueue, percentRandomItemsToInclude) {
