@@ -3,15 +3,21 @@
 // @namespace     https://www.wanikani.com
 // @description   Prioritize review items that are more overdue based on their SRS level and when the review became available.
 // @author        seanblue
-// @version       0.9.5
+// @version       0.9.6
 // @include       https://www.wanikani.com/review/session
 // @grant         none
 // ==/UserScript==
 
 (function($, wkof) {
-	const overdueThreshold = 0.20;
-	const randomItemsToInclude = 0.25;
-	const shouldSortOverdueItems = false;
+	const settingsScriptId = 'prioritizeOverdueReviews';
+	const settingsTitle = 'Prioritize Overdue Reviews';
+
+	const shouldSortOverdueItemsKey = 'shouldSortOverdueItems';
+	const overdueThresholdPercentKey = 'overdueThresholdPercent';
+	const percentRandomItemsToIncludeKey = 'percentRandomItemsToInclude';
+
+	function promise(){var a,b,c=new Promise(function(d,e){a=d;b=e;});c.resolve=a;c.reject=b;return c;}
+	let settingsLoadedPromise = promise();
 
 	if (!wkof) {
 		var response = confirm('WaniKani Prioritize Overdue Reviews script requires WaniKani Open Framework.\n Click "OK" to be forwarded to installation instructions.');
@@ -23,13 +29,47 @@
 		return;
 	}
 
-	wkof.include('ItemData');
-	wkof.ready('ItemData').then(fetchData);
+	wkof.include('ItemData, Settings, Menu');
+	wkof.ready('Settings, Menu').then(loadSettings);
+	wkof.ready('ItemData').then(reorderReviews);
 
-	function fetchData() {
+	function loadSettings() {
+		wkof.Menu.insert_script_link({ name: settingsScriptId, submenu:'Settings', title: settingsTitle, on_click: openSettings });
+
+		let defaultSettings = {};
+		defaultSettings[overdueThresholdPercentKey] = 20;
+		defaultSettings[percentRandomItemsToIncludeKey] = 25;
+		defaultSettings[shouldSortOverdueItemsKey] = 'random';
+
+		wkof.Settings.load(settingsScriptId, defaultSettings).then(function() {
+			settingsLoadedPromise.resolve();
+		});
+
+		return settingsLoadedPromise;
+	}
+
+	function openSettings() {
+		var settings = {};
+		settings[overdueThresholdPercentKey] = { type: 'number', label: 'Overdue Threshold', hover_tip: 'test 1' };
+		settings[percentRandomItemsToIncludeKey] = { type: 'number', label: 'Randomness Factor', hover_tip: 'test 2' };
+		settings[shouldSortOverdueItemsKey] = { type: 'dropdown', label: 'Overdue Item Sorting', content: {'random': 'Random','sorted':'Sorted'}, hover_tip: 'test 3' };
+
+		let settingsDialog = new wkof.Settings({
+			script_id: settingsScriptId,
+			title: settingsTitle,
+			on_save: reorderReviews,
+			settings: settings
+		});
+
+		settingsDialog.open();
+	}
+
+	function reorderReviews() {
 		let promises = [];
+
 		promises.push(wkof.Apiv2.get_endpoint('srs_stages'));
 		promises.push(wkof.ItemData.get_items('assignments'));
+		promises.push(settingsLoadedPromise); // This should go last to not interfere with the data actually returned from the other two promises.
 
 		return Promise.all(promises).then(processData).then(updateReviewQueue);
 	}
@@ -93,6 +133,11 @@
 	}
 
 	function updateReviewQueue(overduePercentDictionary) {
+		let settings = wkof.settings[settingsScriptId];
+		let overdueThreshold = Math.max(0, settings[overdueThresholdPercentKey] / 100) || 0;
+		let percentRandomItemsToInclude = Math.min(1, Math.max(0, settings[percentRandomItemsToIncludeKey] / 100)) || 0;
+		let shouldSortOverdueItems = settings[shouldSortOverdueItemsKey] === 'sorted';
+
 		window.overduePercentDictionary = overduePercentDictionary;
 
 		let reviewQueue = $.jStorage.get('activeQueue').concat($.jStorage.get('reviewQueue'));
@@ -103,7 +148,7 @@
 			overdueQueue = overdueQueue.sort((item1, item2) => sortQueueByOverduePercent(item1, item2, overduePercentDictionary));
 		}
 
-		randomlyAddNotOverdueItems(overdueQueue, notOverdueQueue);
+		randomlyAddNotOverdueItems(overdueQueue, notOverdueQueue, percentRandomItemsToInclude);
 
 		let queue = overdueQueue.concat(notOverdueQueue);
 
@@ -112,8 +157,8 @@
 		updateQueueState(queue);
 	}
 
-	function randomlyAddNotOverdueItems(overdueQueue, notOverdueQueue) {
-		let randomNumberOfNotOverdueItemsToInsert = Math.min(Math.ceil(randomItemsToInclude * overdueQueue.length), notOverdueQueue.length);
+	function randomlyAddNotOverdueItems(overdueQueue, notOverdueQueue, percentRandomItemsToInclude) {
+		let randomNumberOfNotOverdueItemsToInsert = Math.min(Math.ceil(percentRandomItemsToInclude * overdueQueue.length), notOverdueQueue.length);
 
 		for (let i = 0; i < randomNumberOfNotOverdueItemsToInsert; i++) {
 			// Allow equal chance between any existing array index and the end of the array to avoid bias.
