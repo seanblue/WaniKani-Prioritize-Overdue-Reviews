@@ -116,7 +116,8 @@
 		let randomNumberOfNotOverdueItemsToInsert = Math.min(Math.ceil(randomItemsToInclude * overdueQueue.length), notOverdueQueue.length);
 
 		for (let i = 0; i < randomNumberOfNotOverdueItemsToInsert; i++) {
-			let randomIndex = getRandomArrayIndex(overdueQueue.length);
+			// Allow equal chance between any existing array index and the end of the array to avoid bias.
+			let randomIndex = getRandomArrayIndex(overdueQueue.length + 1);
 			overdueQueue.splice(randomIndex, 0, notOverdueQueue[0]);
 			notOverdueQueue.splice(0, 1);
 		}
