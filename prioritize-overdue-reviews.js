@@ -3,7 +3,7 @@
 // @namespace     https://www.wanikani.com
 // @description   Prioritize review items that are more overdue based on their SRS level and when the review became available.
 // @author        seanblue
-// @version       0.9.8
+// @version       0.9.9
 // @include       https://www.wanikani.com/review/session
 // @grant         none
 // ==/UserScript==
@@ -18,6 +18,9 @@
 
 	function promise(){var a,b,c=new Promise(function(d,e){a=d;b=e;});c.resolve=a;c.reject=b;return c;}
 	let settingsLoadedPromise = promise();
+
+	// Prevent other scripts from hijacking Math.random by using a local version.
+	let localRandom = window.Math.random;
 
 	if (!wkof) {
 		var response = confirm('WaniKani Prioritize Overdue Reviews script requires WaniKani Open Framework.\n Click "OK" to be forwarded to installation instructions.');
@@ -164,7 +167,7 @@
 		let m = array.length;
 
 		while (m > 0) {
-			let i = Math.floor(Math.random() * m);
+			let i = Math.floor(localRandom() * m);
 			m--;
 
 			let t = array[m];
@@ -187,7 +190,7 @@
 	}
 
 	function getRandomArrayIndex(arraySize) {
-		return Math.floor(Math.random() * arraySize);
+		return Math.floor(localRandom() * arraySize);
 	}
 
 	function sortQueueByOverduePercent(item1, item2, overduePercentDictionary) {
