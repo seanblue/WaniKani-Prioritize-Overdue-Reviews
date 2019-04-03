@@ -20,8 +20,8 @@
 	function promise(){var a,b,c=new Promise(function(d,e){a=d;b=e;});c.resolve=a;c.reject=b;return c;}
 	let settingsLoadedPromise = promise();
 
-	let overdueCountSpanId = 'por-overdue-count';
-	let overdueIconId = 'por-overdue-icon';
+	let overdueReviewCountSpan = $('<span />');
+	let overdueReviewIcon = $('<i class="icon-medkit" />');
 	let originalOverdueReviewSet;
 	let alreadySetUpOverdueItemCountRendering = false;
 
@@ -248,16 +248,15 @@
 			let shouldSetUpOverdueItemCountRendering = wkof.settings[settingsScriptId][shouldDisplayOverdueItemCountKey];
 
 			if (shouldSetUpOverdueItemCountRendering && !alreadySetUpOverdueItemCountRendering) {
-				let overdueReviewCountSpan = $(`<span id="${overdueCountSpanId}">`);
-				$('#stats').prepend(overdueReviewCountSpan).prepend(`<i id="${overdueIconId}" class="icon-medkit" />`)
+				$('#stats').prepend(overdueReviewCountSpan).prepend(overdueReviewIcon);
 
 				$.jStorage.listenKeyChange('currentItem', updateOverdueCountOnPage);
 
 				alreadySetUpOverdueItemCountRendering = true;
 			}
 			else if (!shouldSetUpOverdueItemCountRendering && alreadySetUpOverdueItemCountRendering) {
-				$(`#${overdueCountSpanId}`).remove();
-				$(`#${overdueIconId}`).remove();
+				overdueReviewCountSpan.remove();
+				overdueReviewIcon.remove();
 
 				$.jStorage.stopListening('currentItem', updateOverdueCountOnPage);
 
@@ -270,7 +269,7 @@
 		let remainingReviewIds = getFullReviewQueue().map(item => item.id);
 		let remainingOverdueReviewSet = new Set(remainingReviewIds.filter(id => originalOverdueReviewSet.has(id)));
 
-		$(`#${overdueCountSpanId}`).text(remainingOverdueReviewSet.size);
+		overdueReviewCountSpan.text(remainingOverdueReviewSet.size);
 	}
 
 })(window.jQuery, window.wkof);
