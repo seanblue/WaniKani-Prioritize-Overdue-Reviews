@@ -3,7 +3,7 @@
 // @namespace     https://www.wanikani.com
 // @description   Prioritize review items that are more overdue based on their SRS level and when the review became available.
 // @author        seanblue
-// @version       0.9.10
+// @version       0.9.11
 // @include       https://www.wanikani.com/review/session
 // @grant         none
 // ==/UserScript==
@@ -240,7 +240,31 @@
 
 		$.jStorage.set('activeQueue', activeQueue);
 		$.jStorage.set('reviewQueue', inactiveQueue);
-		$.jStorage.set('currentItem', activeQueue[0])
+
+		let newCurrentItem = activeQueue[0];
+		let newItemType = getItemType(newCurrentItem);
+
+		$.jStorage.set('questionType', newItemType);
+		$.jStorage.set('currentItem', newCurrentItem);
+	}
+
+	// Mostly copied from WaniKani source code.
+	function getItemType(item) {
+		if (item.rad) {
+			return 'meaning';
+		}
+
+		let itemReviewData = item.kan ? $.jStorage.get('k' + item.id) : $.jStorage.get('v' + item.id);
+
+		if (itemReviewData === null || (typeof itemReviewData.mc === 'undefined' && typeof itemReviewData.rc === 'undefined')) {
+			return ['meaning', 'reading'][Math.floor(2 * Math.random())];
+		}
+
+		if (itemReviewData.mc >= 1) {
+			return 'reading';
+		}
+
+		return 'meaning'
 	}
 
 	function setupUI() {
