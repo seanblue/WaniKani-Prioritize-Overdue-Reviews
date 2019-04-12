@@ -3,7 +3,7 @@
 // @namespace     https://www.wanikani.com
 // @description   Prioritize review items that are more overdue based on their SRS level and when the review became available.
 // @author        seanblue
-// @version       0.9.11
+// @version       1.0.0
 // @include       https://www.wanikani.com/review/session
 // @grant         none
 // ==/UserScript==
@@ -96,9 +96,7 @@
 		let items = results[1];
 
 		let now = new Date().getTime();
-		let overduePercentList = items.filter(item => isReviewAvailable(item, now)).map(item => mapToOverduePercentData(item, now, srsStages)).sort(sortByOverduePercent);
-
-		window.overduePercentList = overduePercentList;
+		let overduePercentList = items.filter(item => isReviewAvailable(item, now)).map(item => mapToOverduePercentData(item, now, srsStages));
 
 		return toOverduePercentDictionary(overduePercentList);
 	}
@@ -124,20 +122,6 @@
 		};
 	}
 
-	// TODO: Delete this.
-	function sortByOverduePercent(item1, item2) {
-		let overduePercentCompare = item1.overdue_percent - item2.overdue_percent;
-		if (overduePercentCompare > 0) {
-			return -1;
-		}
-
-		if (overduePercentCompare < 0) {
-			return 1;
-		}
-
-		return item1.id - item2.id;
-	}
-
 	function toOverduePercentDictionary(items) {
 		var dict = {};
 
@@ -155,8 +139,6 @@
 		let percentRandomItemsToInclude = Math.min(1, Math.max(0, settings[percentRandomItemsToIncludeKey] / 100)) || 0;
 		let shouldSortOverdueItems = settings[shouldSortOverdueItemsKey] === 'sorted';
 
-		window.overduePercentDictionary = overduePercentDictionary;
-
 		let reviewQueue = getFullReviewQueue();
 		shuffle(reviewQueue); // Need to reshuffle in case the queue has already been sorted.
 
@@ -171,8 +153,6 @@
 		randomlyAddNotOverdueItems(overdueQueue, notOverdueQueue, percentRandomItemsToInclude);
 
 		let queue = overdueQueue.concat(notOverdueQueue);
-
-		window.queue = queue;
 
 		updateQueueState(queue);
 	}
