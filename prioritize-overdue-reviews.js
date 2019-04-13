@@ -110,8 +110,8 @@
 		let msSinceAvailable = now - availableAtMs;
 
 		let msForSrsStage = srsStages[item.assignments.srs_stage].interval * 1000;
-		let msSinceLastReview = msSinceAvailable + msForSrsStage;
-		let overduePercent = (msSinceLastReview / msForSrsStage) - 1;
+
+		let overduePercent = msSinceAvailable / msForSrsStage;
 
 		return {
 			id: item.id,
