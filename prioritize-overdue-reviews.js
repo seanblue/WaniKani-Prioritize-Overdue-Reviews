@@ -3,7 +3,7 @@
 // @namespace     https://www.wanikani.com
 // @description   Prioritize review items that are more overdue based on their SRS level and when the review became available.
 // @author        seanblue
-// @version       1.0.0
+// @version       1.0.1
 // @include       https://www.wanikani.com/review/session
 // @grant         none
 // ==/UserScript==
@@ -84,7 +84,7 @@
 	function reorderReviews() {
 		let promises = [];
 
-		promises.push(wkof.Apiv2.get_endpoint('srs_stages'));
+		promises.push(wkof.Apiv2.get_endpoint('spaced_repetition_systems'));
 		promises.push(wkof.ItemData.get_items('assignments'));
 		promises.push(settingsLoadedPromise); // This should go last to not interfere with the data actually returned from the other two promises.
 
@@ -92,11 +92,11 @@
 	}
 
 	function processData(results) {
-		let srsStages = results[0];
+		let spacedRepetitionSystems = results[0];
 		let items = results[1];
 
 		let now = new Date().getTime();
-		let overduePercentList = items.filter(item => isReviewAvailable(item, now)).map(item => mapToOverduePercentData(item, now, srsStages));
+		let overduePercentList = items.filter(item => isReviewAvailable(item, now)).map(item => mapToOverduePercentData(item, now, spacedRepetitionSystems));
 
 		return toOverduePercentDictionary(overduePercentList);
 	}
@@ -105,11 +105,11 @@
 		return (item.assignments && (item.assignments.available_at != null) && (new Date(item.assignments.available_at).getTime() < now));
 	}
 
-	function mapToOverduePercentData(item, now, srsStages) {
+	function mapToOverduePercentData(item, now, spacedRepetitionSystems) {
 		let availableAtMs = new Date(item.assignments.available_at).getTime();
 		let msSinceAvailable = now - availableAtMs;
 
-		let msForSrsStage = srsStages[item.assignments.srs_stage].interval * 1000;
+		let msForSrsStage = getIntervalInMilliseconds(item, spacedRepetitionSystems);
 
 		let overduePercent = msSinceAvailable / msForSrsStage;
 
@@ -121,6 +121,22 @@
 			overdue_percent: overduePercent
 		};
 	}
+
+    function getIntervalInMilliseconds(item, spacedRepetitionSystems) {
+        let itemSpacedRepetitionSystemId = item.data.spaced_repetition_system_id;
+        let itemSpacedRepetitionSystem = Object.values(spacedRepetitionSystems).find((system) => system.id === itemSpacedRepetitionSystemId);
+
+        let intervalData = itemSpacedRepetitionSystem.data.stages[item.assignments.srs_stage];
+
+        switch (intervalData.interval_unit) {
+            case 'milliseconds':
+                return intervalData.interval;
+            case 'seconds':
+                return intervalData.interval * 1000;
+            default:
+                throw Error('Unsupported interval unit');
+        }
+    }
 
 	function toOverduePercentDictionary(items) {
 		var dict = {};
